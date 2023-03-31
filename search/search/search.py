@@ -72,6 +72,14 @@ def tinyMazeSearch(problem):
     w = Directions.WEST
     return  [s, s, w, s, w, w, s, w]
 
+def backtrcking(node,startState, fatherSunDict):
+    result = []
+    while node[0] != startState:
+        result.append(node[1])
+        node = fatherSunDict[node]
+    result = result[::-1]
+    return result
+
 def depthFirstSearch(problem):
     """
     Search the deepest nodes in the search tree first.
@@ -86,8 +94,28 @@ def depthFirstSearch(problem):
     print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    fornteire = util.Stack()
+    fornteire.push((problem.getStartState(),None,0))
+    explored = []
+    fatherSunDict = {}
+    #keep searching while there are still nodes to explore
+    while not fornteire.isEmpty():
+        node = fornteire.pop()
+        state, action, cost = node
+        #start backtracking if we have reached the goal
+        if problem.isGoalState(state):
+            return backtrcking(node, problem.getStartState(), fatherSunDict)
+        
+        #add the current node cordinates to the explored list
+        explored.append(state)
+
+        #add the successors of the current node to the frontier
+        for successor in problem.getSuccessors(state):
+            if successor[0] not in explored:
+                fornteire.push(successor)
+                fatherSunDict[successor] = node
+
+    return []
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
