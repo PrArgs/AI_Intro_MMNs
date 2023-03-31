@@ -119,8 +119,28 @@ def depthFirstSearch(problem):
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    fornteire = util.Queue()
+    fornteire.push((problem.getStartState(),None,0))
+    explored = []
+    fatherSunDict = {}
+    #keep searching while there are still nodes to explore
+    while not fornteire.isEmpty():
+        node = fornteire.pop()
+        state, action, cost = node
+        #start backtracking if we have reached the goal
+        if problem.isGoalState(state):
+            return backtrcking(node, problem.getStartState(), fatherSunDict)
+        
+        #add the current node cordinates to the explored list
+        explored.append(state)
+
+        #add the successors of the current node to the frontier
+        for successor in problem.getSuccessors(state):
+            if successor[0] not in explored:
+                fornteire.push(successor)
+                fatherSunDict[successor] = node
+
+    return []
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
