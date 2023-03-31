@@ -122,23 +122,25 @@ def breadthFirstSearch(problem):
     fornteire = util.Queue()
     fornteire.push((problem.getStartState(),None,0))
     explored = []
+    explored.append(problem.getStartState())
     fatherSunDict = {}
     #keep searching while there are still nodes to explore
     while not fornteire.isEmpty():
+        #initialize explored node with the first node in the frontier
         node = fornteire.pop()
         state, action, cost = node
+
         #start backtracking if we have reached the goal
         if problem.isGoalState(state):
-            return backtrcking(node, problem.getStartState(), fatherSunDict)
-        
-        #add the current node cordinates to the explored list
-        explored.append(state)
+            return backtrcking(node, problem.getStartState(), fatherSunDict)      
 
         #add the successors of the current node to the frontier
+        #only if the successor is not in the explored list or sucssoor of any node in the frontier
         for successor in problem.getSuccessors(state):
             if successor[0] not in explored:
                 fornteire.push(successor)
                 fatherSunDict[successor] = node
+                explored.append(successor[0])
 
     return []
 
