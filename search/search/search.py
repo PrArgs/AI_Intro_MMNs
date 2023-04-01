@@ -73,11 +73,16 @@ def tinyMazeSearch(problem):
     return  [s, s, w, s, w, w, s, w]
 
 def backtrcking(node,startState, fatherSunDict):
+    """
+    This function is used to backtrack from the goal state to the start state
+    and return the list of actions that lead to the goal state from the start state
+    by using the fatherSunDict dictionary that contains the parent of each node
+    """
     result = []
     while node[0] != startState:
         result.append(node[1])
         node = fatherSunDict[node]
-    result = result[::-1]
+    result = result[::-1] #reverse the list
     return result
 
 def depthFirstSearch(problem):
@@ -146,8 +151,38 @@ def breadthFirstSearch(problem):
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    fornteire = util.PriorityQueue()
+    fornteire.push((problem.getStartState(),None,0,0),0)
+    explored = []
+    fatherSunDict = {}
+
+    #keep searching while there are still nodes to explore
+    while not fornteire.isEmpty():
+        node, totalcost = fornteire.pop()
+        state, action, cost = node
+
+        #start backtracking if we have reached the goal
+        #Since we use praority queue, we acan be sure that 
+        #the first goal node we pop is the node with the least cost
+        if problem.isGoalState(state):
+            return backtrcking(node, problem.getStartState(), fatherSunDict) 
+        
+        #add the current node cordinates to the explored list
+        explored.append(state)
+        
+        """add the successors of the current node to the frontier 
+        if the successor is not in the frontier 
+        or the successor path cost is less than the path cost of the node in the frontier 
+        update the total cost of the successor if needed"""
+        for successor in problem.getSuccessors(state):
+            if (successor in explored):
+                dist = totalcost+successor[3]
+                fornteire.update(successor, dist)
+                fatherSunDict[successor] = node
+                
+        
+
+    return []
 
 def nullHeuristic(state, problem=None):
     """
