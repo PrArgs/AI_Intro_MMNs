@@ -19,6 +19,10 @@ Pacman agents (in searchAgents.py).
 
 import util
 
+STATE = 0
+ACTION = 1
+COST = 2
+
 class SearchProblem:
     """
     This class outlines the structure of a search problem, but doesn't implement
@@ -107,6 +111,7 @@ def depthFirstSearch(problem):
     while not fornteire.isEmpty():
         node = fornteire.pop()
         state, action, cost = node
+
         #start backtracking if we have reached the goal
         if problem.isGoalState(state):
             return backtrcking(node, problem.getStartState(), fatherSunDict)
@@ -116,7 +121,7 @@ def depthFirstSearch(problem):
 
         #add the successors of the current node to the frontier
         for successor in problem.getSuccessors(state):
-            if successor[0] not in explored:
+            if successor[STATE] not in explored:
                 fornteire.push(successor)
                 fatherSunDict[successor] = node
 
@@ -142,7 +147,7 @@ def breadthFirstSearch(problem):
         #add the successors of the current node to the frontier
         #only if the successor is not in the explored list or sucssoor of any node in the frontier
         for successor in problem.getSuccessors(state):
-            if successor[0] not in explored:
+            if successor[STATE] not in explored:
                 fornteire.push(successor)
                 fatherSunDict[successor] = node
                 explored.append(successor[0])
@@ -152,36 +157,37 @@ def breadthFirstSearch(problem):
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     fornteire = util.PriorityQueue()
-    fornteire.push((problem.getStartState(),None,0,0),0)
-    explored = []
+    node = (problem.getStartState(),None,0)
+    #this time we wiil use a dictionary to keep track of the explored nodes best cost
+    explored = {}
     fatherSunDict = {}
+    
+    #add the start node to the frontier and explored dictionary
+    fornteire.push(node,0)
+    explored[problem.getStartState()] = 0
+
 
     #keep searching while there are still nodes to explore
     while not fornteire.isEmpty():
-        node, totalcost = fornteire.pop()
-        state, action, cost = node
+        node = fornteire.pop()
+        state, action, cost= node
+        totalcost = explored[state]
 
         #start backtracking if we have reached the goal
-        #Since we use praority queue, we acan be sure that 
-        #the first goal node we pop is the node with the least cost
+        #Since we use praority queue, we can be sure that the first goal node we pop is the node with the least cost
         if problem.isGoalState(state):
-            return backtrcking(node, problem.getStartState(), fatherSunDict) 
+            return backtrcking(node, problem.getStartState(), fatherSunDict)   
         
-        #add the current node cordinates to the explored list
-        explored.append(state)
-        
-        """add the successors of the current node to the frontier 
-        if the successor is not in the frontier 
-        or the successor path cost is less than the path cost of the node in the frontier 
-        update the total cost of the successor if needed"""
         for successor in problem.getSuccessors(state):
-            if (successor in explored):
-                dist = totalcost+successor[3]
-                fornteire.update(successor, dist)
-                fatherSunDict[successor] = node
-                
-        
+            #calculate route cost to the successor by adding the cost of the current node to the cost of the rout to the successor
+            dist = totalcost + successor[COST]            
 
+            #if the successor has not been explored or 
+            #the successor path cost is less than the path cost of the node in the explored dictionary
+            if successor[STATE] not in explored or dist < explored[successor[STATE]]:                                
+                explored[successor[STATE]] = dist #update the cost of the successor in the explored dictionary
+                fornteire.update(successor,dist) #update the priority of the successor in the frontier or add it to the frontier if it is not in it
+                fatherSunDict[successor] = node              
     return []
 
 def nullHeuristic(state, problem=None):
@@ -193,8 +199,9 @@ def nullHeuristic(state, problem=None):
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    
+
+
 
 
 # Abbreviations
