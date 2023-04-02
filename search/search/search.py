@@ -199,6 +199,41 @@ def nullHeuristic(state, problem=None):
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
+    fornteire = util.PriorityQueue()
+    node = (problem.getStartState(),None,0)
+    #this time we wiil use a dictionary to keep track of the explored nodes best cost
+    explored = {}
+    fatherSunDict = {}
+    
+    #add the start node to the frontier and explored dictionary
+    fornteire.push(node,0)
+    explored[problem.getStartState()] = 0
+
+
+    #keep searching while there are still nodes to explore
+    while not fornteire.isEmpty():
+        node = fornteire.pop()
+        state, action, cost= node
+        totalcost = explored[state]
+
+        #start backtracking if we have reached the goal
+        #Since we use praority queue, we can be sure that the first goal node we pop is the node with the least cost
+        if problem.isGoalState(state):
+            return backtrcking(node, problem.getStartState(), fatherSunDict)   
+        
+        for successor in problem.getSuccessors(state):
+            #calculate route cost to the successor by adding the cost of the current node to the cost of the rout to the successor
+            dist = totalcost + successor[COST]
+
+
+
+            #if the successor has not been explored or 
+            #the successor path cost is less than the path cost of the node in the explored dictionary
+            if successor[STATE] not in explored or dist < explored[successor[STATE]]:                                
+                explored[successor[STATE]] = dist #update the cost of the successor in the explored dictionary
+                fornteire.update(successor,dist+heuristic(successor[STATE],problem)) #update the priority of the successor in the frontier or add it to the frontier if it is not in it
+                fatherSunDict[successor] = node              
+    return []
     
 
 
