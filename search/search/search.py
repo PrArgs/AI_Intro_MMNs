@@ -231,7 +231,10 @@ def aStarSearch(problem, heuristic=nullHeuristic):
             #the successor path cost is less than the path cost of the node in the explored dictionary
             if successor[STATE] not in explored or dist < explored[successor[STATE]]:                                
                 explored[successor[STATE]] = dist #update the cost of the successor in the explored dictionary
-                fornteire.update(successor,dist+heuristic(successor[STATE],problem)) #update the priority of the successor in the frontier or add it to the frontier if it is not in it
+
+                #update the priority of the successor in the frontier or add it to the frontier if it is not in it
+                #the priority is the sum of the cost of the route to the successor and the heuristic value of the successor
+                fornteire.update(successor,dist+heuristic(successor[STATE],problem)) 
                 fatherSunDict[successor] = node              
     return []
     
