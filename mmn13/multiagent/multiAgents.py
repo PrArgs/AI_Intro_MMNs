@@ -42,14 +42,14 @@ class ReflexAgent(Agent):
         legalMoves = gameState.getLegalActions()
 
         # Choose one of the best actions
-        scores = [self.evaluationFunction(gameState, action) for action in legalMoves]
-        bestScore = max(scores)
-        bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
+        scores = [self.evaluationFunction(gameState, action) for action in legalMoves] # Get the score for each action
+        bestScore = max(scores) # Get the best score value
+        bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore] # Get the indices with the best score
         chosenIndex = random.choice(bestIndices) # Pick randomly among the best
 
         "Add more of your code here if you want to"
 
-        return legalMoves[chosenIndex]
+        return legalMoves[chosenIndex] 
 
     def evaluationFunction(self, currentGameState, action):
         """
@@ -74,7 +74,28 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        score = successorGameState.getScore() # Get the score of the successor state
+        # avvoid ghosts by penalizing the score
+        for ghost in newGhostStates:
+            gPose = ghost.getPosition()
+            if manhattanDistance(newPos, gPose) < 2:
+                # if newScaredTimes[ghost] > 1:
+                    # score += 1000
+                score -= 1000
+        # check if the the new state contained food and reward the score
+        if successorGameState.getNumFood() < currentGameState.getNumFood() :
+            score += 10
+        # find the closest food and panalize the score by its distance
+        else:
+            foodList = newFood.asList()
+            # set min to infinity
+            min = float("inf")
+            for food in foodList:
+                if manhattanDistance(newPos, food) < min:
+                    min = manhattanDistance(newPos, food)
+            score -= min           
+        
+        return score 
 
 def scoreEvaluationFunction(currentGameState):
     """
