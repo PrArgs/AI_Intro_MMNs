@@ -215,7 +215,69 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        alpha = float("-inf")
+        beta = float("inf")
+        _, action = self.__Max_Value(gameState, self.depth, alpha, beta)
+        return action
+
+    def __Max_Value(self, gameState, depth ,alpha, beta, agentIndex = 0):
+        # check if the state is a terminal state
+        if gameState.isWin() or gameState.isLose() or depth == 0:
+            return self.evaluationFunction(gameState) , None
+        # get the legal actions of the state
+        legalActions = gameState.getLegalActions(agentIndex)
+        #set first gohst index
+        ghostIndex = self.index + 1
+        # set the max value to negative infinity
+        value = float("-inf")
+        a = Directions.STOP
+        for action in legalActions:
+            # get the successor state
+            successor = gameState.generateSuccessor(agentIndex, action)
+            # get the max value
+            v, _ = self.__Min_Value(successor, depth, ghostIndex, alpha, beta)           
+            if v > value:
+                value = v
+                a = action
+                alpha = max(alpha, value)
+            if value > beta:
+                return value, a
+        return value, a
+    
+    def __Min_Value(self, gameState, depth , agentIndex, alpha, beta):
+        # check if the state is a terminal state
+        if gameState.isWin() or gameState.isLose():
+            return self.evaluationFunction(gameState) , None
+        # get the legal actions of the state
+        legalActions = gameState.getLegalActions(agentIndex)
+        # set the min value to infinity
+        value = float("inf")
+        a = Directions.STOP
+        for action in legalActions:
+             # get the successor state
+            successor = gameState.generateSuccessor(agentIndex, action)
+
+            # check if the agent is the last ghost
+            if agentIndex < gameState.getNumAgents() - 1:
+                # get the min value
+                v, _ = self.__Min_Value(successor, depth, agentIndex+1, alpha, beta)
+                if v < value:
+                    value = v
+                    a = action
+                    beta = min(beta, value)
+                if value < alpha:
+                    return value, a
+
+            else:               
+                # get the min value
+                v, _ = self.__Max_Value(successor, depth - 1, alpha, beta)
+                if v < value:
+                    value = v
+                    a = action
+                    beta = min(beta, value)
+                if value < alpha:
+                    return value, a
+        return value, a
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
