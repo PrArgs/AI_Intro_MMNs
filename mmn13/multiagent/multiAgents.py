@@ -78,15 +78,11 @@ class ReflexAgent(Agent):
         # avvoid ghosts by penalizing the score
         for ghost in newGhostStates:
             gPose = ghost.getPosition()
+            # if the ghost is close to pacman, penalize the score
             if manhattanDistance(newPos, gPose) < 2:
-                # if newScaredTimes[ghost] > 1:
-                    # score += 1000
                 score -= 1000
-        # check if the the new state contained food and reward the score
-        if successorGameState.getNumFood() < currentGameState.getNumFood() :
-            score += 10
-        # find the closest food and panalize the score by its distance
-        else:
+        # check if the the new state contained food if not find the closest food and panalize the score by its distance
+        if not successorGameState.getNumFood() < currentGameState.getNumFood() :
             foodList = newFood.asList()
             # set min to infinity
             min = float("inf")
@@ -156,7 +152,58 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        _, action = self.__Max_Value(gameState, self.depth)
+        return action
+        
+
+    def __Max_Value(self, gameState, depth ,agentIndex = 0):
+        # check if the state is a terminal state
+        if gameState.isWin() or gameState.isLose() or depth == 0:
+            return self.evaluationFunction(gameState) , None
+        # get the legal actions of the state
+        legalActions = gameState.getLegalActions(agentIndex)
+        #set first gohst index
+        ghostIndex = self.index + 1
+        # set the max value to negative infinity
+        value = float("-inf")
+        a = Directions.STOP
+        for action in legalActions:
+            # get the successor state
+            successor = gameState.generateSuccessor(agentIndex, action)
+            # get the max value
+            v, _ = self.__Min_Value(successor, depth, ghostIndex)           
+            if v > value:
+                value = v
+                a = action
+        return value, a
+    
+    def __Min_Value(self, gameState, depth , agentIndex):
+       # check if the state is a terminal state
+        if gameState.isWin() or gameState.isLose():
+            return self.evaluationFunction(gameState) , None
+        # get the legal actions of the state
+        legalActions = gameState.getLegalActions(agentIndex)
+        # set the min value to infinity
+        value = float("inf")
+        a = Directions.STOP
+        for action in legalActions:
+             # get the successor state
+            successor = gameState.generateSuccessor(agentIndex, action)
+
+            # check if the agent is the last ghost
+            if agentIndex < gameState.getNumAgents() - 1:
+                # get the min value
+                v, _ = self.__Min_Value(successor, depth, agentIndex+1)
+                if v < value:
+                    value = v
+                    a = action  
+            else:               
+                # get the min value
+                v, _ = self.__Max_Value(successor, depth - 1,)
+                if v < value:
+                    value = v
+                    a = action  
+        return value, a
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
