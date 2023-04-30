@@ -365,13 +365,14 @@ def betterEvaluationFunction(currentGameState):
     """
 
     # final Reward values
-    CHASE_REWARD = 199 # one less than the score of eating a scared ghost    
+    CHASE_REWARD = 1 # one less than the score of eating a scared ghost    
 
     # final whight
-    SCORE_WEIGHT = 1
-    FOOD_AMOUNT_WEIGHT = 0.8
-    NEAREST_FOOD_WEIGHT = -0.5
-    CAPSULE_WEIGHT = -0.5
+    SCORE_WEIGHT = 3
+    FOOD_AMOUNT_WEIGHT = -1.5
+    NEAREST_FOOD_WEIGHT = 1.75
+    CAPSULE_WEIGHT = 0
+
 
 
     # Useful information you can extract from a GameState (pacman.py)
@@ -380,12 +381,14 @@ def betterEvaluationFunction(currentGameState):
     MonsterPos = currentGameState.getGhostPositions()
     GhostStates = currentGameState.getGhostStates()
     #maps the scared times of the ghosts when the key is the ghost position and the value is the scared time   
-    #ScaredTimes = {GhostStates[i].getPosition(): GhostStates[i].scaredTimer for i in range(len(GhostStates))}
+    ScaredTimes = {GhostStates[i].getPosition(): GhostStates[i].scaredTimer for i in range(len(GhostStates))}
     foodList = currentGameState.getFood().asList()
 
+    # Find the number of food left and multiply it by a weight
+    foodAmount = len(foodList)
 
     # Find nearest food and multiply it by a weight
-    if len(foodList) > ZERO:
+    if foodAmount > ZERO:
         nearstFood = min([manhattanDistance(pacmanPos, food_position) for food_position in foodList]) 
     else:
         nearstFood = ONE
@@ -397,15 +400,14 @@ def betterEvaluationFunction(currentGameState):
     # Find the score of the current state and multiply it by a weight
     game_score = currentGameState.getScore()
 
-    # Since we see 2 steps ahead, we do not need the check if the ghost will eat pacman but we want to reward pacman for chasing the ghost if it can be eaten 
-    ChaseGhost = ZERO
-
     # If ghost is scared, pacman should chase it can reach it in time
     # if true set ChaseGhost to the reward of eating a scared ghost 
-    #ChaseGhost = sum([ONE for ghost in MonsterPos if ScaredTimes[ghost] > ZERO and manhattanDistance(pacmanPos, ghost) <= ScaredTimes[ghost]])
+    ChaseGhost = sum([ONE for ghost in MonsterPos if ScaredTimes[ghost] > ZERO and manhattanDistance(pacmanPos, ghost) < ScaredTimes[ghost]])
+       
+
         
-    scoreList = [game_score, nearstFood, ChaseGhost, CapsuleLeft]
-    whightList = [SCORE_WEIGHT, NEAREST_FOOD_WEIGHT, FOOD_AMOUNT_WEIGHT, CAPSULE_WEIGHT]
+    scoreList = [game_score, 1.0/nearstFood, foodAmount, CapsuleLeft, ChaseGhost]
+    whightList = [SCORE_WEIGHT, NEAREST_FOOD_WEIGHT, FOOD_AMOUNT_WEIGHT, CAPSULE_WEIGHT, CHASE_REWARD]
 
     return sum([score * weight for score, weight in zip(scoreList, whightList)])
 
