@@ -371,7 +371,7 @@ def betterEvaluationFunction(currentGameState):
     SCORE_WEIGHT = 3
     FOOD_AMOUNT_WEIGHT = -1.5
     NEAREST_FOOD_WEIGHT = 1.75
-    CAPSULE_WEIGHT = 0
+    CAPSULE_WEIGHT = 0 # turns out that capsules are important only when the ghosts are scared and near which is rare
 
 
 
