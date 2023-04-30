@@ -17,6 +17,8 @@ from game import Directions
 import random, util
 
 from game import Agent
+ZERO = 0
+ONE = 1
 
 class ReflexAgent(Agent):
     """
@@ -119,7 +121,7 @@ class MultiAgentSearchAgent(Agent):
     """
 
     def __init__(self, evalFn = 'scoreEvaluationFunction', depth = '2'):
-        self.index = 0 # Pacman is always agent index 0
+        self.index = ZERO # Pacman is always agent index 0
         self.evaluationFunction = util.lookup(evalFn, globals())
         self.depth = int(depth)
 
@@ -156,14 +158,14 @@ class MinimaxAgent(MultiAgentSearchAgent):
         return action
         
 
-    def __Max_Value(self, gameState, depth ,agentIndex = 0):
+    def __Max_Value(self, gameState, depth ,agentIndex = ZERO):
         # check if the state is a terminal state
         if gameState.isWin() or gameState.isLose() or depth == 0:
             return self.evaluationFunction(gameState) , None
         # get the legal actions of the state
         legalActions = gameState.getLegalActions(agentIndex)
         #set first gohst index
-        ghostIndex = self.index + 1
+        ghostIndex = self.index + ONE
         # set the max value to negative infinity
         value = float("-inf")
         a = Directions.STOP
@@ -191,15 +193,15 @@ class MinimaxAgent(MultiAgentSearchAgent):
             successor = gameState.generateSuccessor(agentIndex, action)
 
             # check if the agent is the last ghost
-            if agentIndex < gameState.getNumAgents() - 1:
+            if agentIndex < gameState.getNumAgents() - ONE:
                 # get the min value
-                v, _ = self.__Min_Value(successor, depth, agentIndex+1)
+                v, _ = self.__Min_Value(successor, depth, agentIndex+ONE)
                 if v < value:
                     value = v
                     a = action  
             else:               
                 # get the min value
-                v, _ = self.__Max_Value(successor, depth - 1,)
+                v, _ = self.__Max_Value(successor, depth - ONE,)
                 if v < value:
                     value = v
                     a = action  
@@ -214,20 +216,20 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
         Returns the minimax action using self.depth and self.evaluationFunction
         """
-        "*** YOUR CODE HERE ***"
+        # set alpha to negative infinity and beta to positive infinity
         alpha = float("-inf")
         beta = float("inf")
         _, action = self.__Max_Value(gameState, self.depth, alpha, beta)
         return action
 
-    def __Max_Value(self, gameState, depth ,alpha, beta, agentIndex = 0):
+    def __Max_Value(self, gameState, depth ,alpha, beta, agentIndex = ZERO):
         # check if the state is a terminal state
-        if gameState.isWin() or gameState.isLose() or depth == 0:
+        if gameState.isWin() or gameState.isLose() or depth == ZERO:
             return self.evaluationFunction(gameState) , None
         # get the legal actions of the state
         legalActions = gameState.getLegalActions(agentIndex)
         #set first gohst index
-        ghostIndex = self.index + 1
+        ghostIndex = self.index + ONE
         # set the max value to negative infinity
         value = float("-inf")
         a = Directions.STOP
@@ -240,6 +242,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                 value = v
                 a = action
                 alpha = max(alpha, value)
+            # unlike regular alpha beta pruning, we've been asked not to check equality
             if value > beta:
                 return value, a
         return value, a
@@ -258,9 +261,9 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
             successor = gameState.generateSuccessor(agentIndex, action)
 
             # check if the agent is the last ghost
-            if agentIndex < gameState.getNumAgents() - 1:
+            if agentIndex < gameState.getNumAgents() - ONE:
                 # get the min value
-                v, _ = self.__Min_Value(successor, depth, agentIndex+1, alpha, beta)
+                v, _ = self.__Min_Value(successor, depth, agentIndex+ONE, alpha, beta)
                 if v < value:
                     value = v
                     a = action
@@ -270,7 +273,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
 
             else:               
                 # get the min value
-                v, _ = self.__Max_Value(successor, depth - 1, alpha, beta)
+                v, _ = self.__Max_Value(successor, depth - ONE, alpha, beta)
                 if v < value:
                     value = v
                     a = action
@@ -292,7 +295,66 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        _, action = self.__Max_Value(gameState, self.depth)
+        return action
+        
+
+    def __Max_Value(self, gameState, depth ,agentIndex = ZERO):
+        # check if the state is a terminal state
+        if gameState.isWin() or gameState.isLose() or depth == ZERO:
+            return self.evaluationFunction(gameState) , None
+        # get the legal actions of the state
+        legalActions = gameState.getLegalActions(agentIndex)
+        #set first gohst index
+        ghostIndex = self.index + ONE
+        # set the max value to negative infinity
+        value = float("-inf")
+        a = Directions.STOP
+        for action in legalActions:
+            # get the successor state
+            successor = gameState.generateSuccessor(agentIndex, action)
+            # get the max value of the average of the min values
+            v, _ = self.__Min_Value(successor, depth, ghostIndex)           
+            if v > value:
+                value = v
+                a = action
+        return value, a
+    
+    def __Min_Value(self, gameState, depth , agentIndex):
+       # check if the state is a terminal state
+        if gameState.isWin() or gameState.isLose():
+            return self.evaluationFunction(gameState) , None
+        # get the legal actions of the state
+        legalActions = gameState.getLegalActions(agentIndex)
+        # set the min value to infinity
+        value = ZERO
+        
+        a = Directions.STOP
+        for action in legalActions:
+            sumMonsterOne  = ZERO
+             # get the successor state
+            successor = gameState.generateSuccessor(agentIndex, action)
+
+            # check if the agent is the last ghost
+            if agentIndex < gameState.getNumAgents() - ONE:
+                # get the min value
+                v, _ = self.__Min_Value(successor, depth, agentIndex+ONE)
+                
+                # sumMonsterOne += v
+            else:               
+                # get the min value
+                v, _ = self.__Max_Value(successor, depth - ONE,)
+                # counterMonsterTow += 1
+                # sumMonsterTwo += v
+            
+            value += v
+        # sinnce we know that the ghosts are choosing uniformly at random from their legal moves
+        # The Expected value is the avrage of each possible move
+        if len(legalActions) != ZERO:
+            value = value / len(legalActions)
+        else:
+            raise Exception("legalActions is empty")
+        return value, None
 
 def betterEvaluationFunction(currentGameState):
     """
