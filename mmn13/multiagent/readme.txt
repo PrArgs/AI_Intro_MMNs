@@ -1,3 +1,5 @@
+Auther of this code: Roi Argaman 312496441
+
 q.1 - reflex agent
 since we can only see one step ahead the Reflex Agent evaluation Function will determine which states are
 to be penalized and which to be reworded:
