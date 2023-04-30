@@ -20,3 +20,4 @@ mmn13/multiagent/__pycache__/testClasses.cpython-36.pyc
 mmn13/multiagent/__pycache__/testParser.cpython-36.pyc
 mmn13/multiagent/__pycache__/textDisplay.cpython-36.pyc
 mmn13/multiagent/__pycache__/util.cpython-36.pyc
+*.pyc
