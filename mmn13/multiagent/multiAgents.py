@@ -363,8 +363,51 @@ def betterEvaluationFunction(currentGameState):
 
     DESCRIPTION: <write something here so we know what you did>
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    # final Reward values
+    CHASE_REWARD = 199 # one less than the score of eating a scared ghost    
+
+    # final whight
+    SCORE_WEIGHT = 1
+    FOOD_AMOUNT_WEIGHT = 0.8
+    NEAREST_FOOD_WEIGHT = -0.5
+    CAPSULE_WEIGHT = -0.5
+
+
+    # Useful information you can extract from a GameState (pacman.py)
+    
+    pacmanPos = currentGameState.getPacmanPosition()
+    MonsterPos = currentGameState.getGhostPositions()
+    GhostStates = currentGameState.getGhostStates()
+    #maps the scared times of the ghosts when the key is the ghost position and the value is the scared time   
+    #ScaredTimes = {GhostStates[i].getPosition(): GhostStates[i].scaredTimer for i in range(len(GhostStates))}
+    foodList = currentGameState.getFood().asList()
+
+
+    # Find nearest food and multiply it by a weight
+    if len(foodList) > ZERO:
+        nearstFood = min([manhattanDistance(pacmanPos, food_position) for food_position in foodList]) 
+    else:
+        nearstFood = ONE
+
+
+    # Find the number of capsules left and multiply it by a weight
+    CapsuleLeft = len(currentGameState.getCapsules())
+    
+    # Find the score of the current state and multiply it by a weight
+    game_score = currentGameState.getScore()
+
+    # Since we see 2 steps ahead, we do not need the check if the ghost will eat pacman but we want to reward pacman for chasing the ghost if it can be eaten 
+    ChaseGhost = ZERO
+
+    # If ghost is scared, pacman should chase it can reach it in time
+    # if true set ChaseGhost to the reward of eating a scared ghost 
+    #ChaseGhost = sum([ONE for ghost in MonsterPos if ScaredTimes[ghost] > ZERO and manhattanDistance(pacmanPos, ghost) <= ScaredTimes[ghost]])
+        
+    scoreList = [game_score, nearstFood, ChaseGhost, CapsuleLeft]
+    whightList = [SCORE_WEIGHT, NEAREST_FOOD_WEIGHT, FOOD_AMOUNT_WEIGHT, CAPSULE_WEIGHT]
+
+    return sum([score * weight for score, weight in zip(scoreList, whightList)])
 
 # Abbreviation
 better = betterEvaluationFunction
