@@ -12,9 +12,6 @@ MRB = 2 #Missionaries Right Bank
 KRB = 3 #Kannibals Right Bank
 BP = 4 #Boat Position
 LBP = 5 #Last Boat Position
-MB = 6 # Missionaries on Boat
-KB = 7 # Kannibals on Boat
-
 
 
 
@@ -30,33 +27,22 @@ KB = 7 # Kannibals on Boat
 
 class MissionariesCannibalsProblem():    
 
-    def __init__(self, state =[0,0,3,3,RIGHTBANCK,RIGHTBANCK,0,0]):
-        #kist of 5 elements M in left bank, K in left bank, M in right bank, K in right bank, 5 boat position
+    def __init__(self, state =[0,0,3,3,RIGHTBANCK,RIGHTBANCK]):
+        #list of 5 elements M in left bank, K in left bank, M in right bank, K in right bank, 5 boat position, 6 last boat position, 7 Missionaries on Boat, 8 Kannibals on Boat
         self.state = state
 
     def getVal(self):
-        return (lambda x: sum(np.power(2,x* self.state[x])))(self.state)
+
+        value = 0
+        for i in range(0,5):
+            value +=np.power(2,self.state[i]*i)
+        return value
     
     def __eq__(self, other):
         return self.getVal == other.getVal    
     
     def isGoalState(self, state):
-        return state == [3,3,0,0,LEFTBANCK,RIVER,0,0]
-    
-    # return one of 4 states
-    def getCase(self, state):
-        # 1. == both banks has same number of kannibals and missionaries
-        if state[MLB] == state[KLB] and state[MRB] == state[KRB]:
-            return 1
-        # 2. = > left bank has same number of kannibals and missionaries and right bank has more missionaries than kannibals
-        elif state[MLB] == state[KLB] and state[MRB] > state[KRB]:
-            return 2
-        # 3. > = right bank has same number of kannibals and missionaries and left bank has more missionaries than kannibals
-        elif state[MLB] > state[KLB] and state[MRB] == state[KRB]:
-            return 3
-        # 4. > > both banks has more missionaries than kannibals
-        elif state[MLB] > state[KLB] and state[MRB] > state[KRB]:
-            return 4
+        return state == [3,3,0,0,LEFTBANCK,RIVER]
         
     # check if the state is legal
     def isLegal(self, state):
@@ -70,23 +56,22 @@ class MissionariesCannibalsProblem():
     
     def dropPasnngares(self, state):
         result = state.copy()
+        KanibalsOnBoat =  3- (state[KLB] + state[KRB])
+        MissionariesOnBoat = 3 - (state[MLB] + state[MRB])
+        if KanibalsOnBoat < 0 or MissionariesOnBoat < 0:
+            raise Exception("Error in dropPasnngares you are missing some passengers")
         #boat came from left bank drop passengers on left bank base on type of passengers
         if state[BP] == LEFTBANCK:
-            result[MLB] += state[MB]
-            result[MB] = 0
-            result[KLB] += state[KB]
-            result[KB] = 0
+            result[MLB] += MissionariesOnBoat
+            result[KLB] += KanibalsOnBoat
             return result
         #boat came from right bank drop passengers on right bank base on type of passengers
         elif state[BP] == RIGHTBANCK:
-            result[MRB] += state[MB]
-            result[MB] = 0
-            result[KRB] += state[KB]
-            result[KB] = 0
+            result[MRB] += MissionariesOnBoat
+            result[KRB] += KanibalsOnBoat
             return result
         else:
             raise Exception("Error in dropPasnngares you can't drop passengers in the river")
-
            
     def crossRiver(self, state):
         successors = []
@@ -106,15 +91,16 @@ class MissionariesCannibalsProblem():
             return successors
         
     def LeavLeftBank(self, state):
-        droped = self.dropPasnngares(state)
         successors = []
+        droped = MissionariesCannibalsProblem(self.dropPasnngares(state))
+        if droped.isGoalState(droped.state):
+            successors.append(droped)
+           
         #put people on boat
         for i in range[0,2]:
             for j in range[0,2]:
                 if i+j <3:
                     temp = droped.copy()
-                    temp[MB] = i
-                    temp[KB] = j
                     temp[MLB] -= i
                     temp[KLB] -= j
                     temp[BP] = RIVER
@@ -123,15 +109,13 @@ class MissionariesCannibalsProblem():
         return successors                 
     
     def LeavRightBank(self, state):
-        droped = self.dropPasnngares(state)
         successors = []
+        droped = MissionariesCannibalsProblem(self.dropPasnngares(state))
         #put people on boat
         for i in range[0,2]:
             for j in range[0,2]:
                 if i+j <3:
                     temp = droped.copy()
-                    temp[MB] = i
-                    temp[KB] = j
                     temp[MRB] -= i
                     temp[KRB] -= j
                     temp[BP] = RIVER
@@ -141,20 +125,23 @@ class MissionariesCannibalsProblem():
 
     def getSuccessors(self, state):
         successors = []
-        peopleOnBoat = abs((sum(state[0:4]) - 6))
-        case = self.getCase(state)
 
+        #check if the boat is in the river
         if state[BP] == RIVER:            
             successors.append(self.crossRiver(state))
-        
+
+        #check if the boat is in the left bank
         elif state[BP] == LEFTBANCK:
             successors.append(self.LeavLeftBank(state))
-        
+
+        #check if the boat is in the right bank
         elif state[BP] == RIGHTBANCK:
             successors.append(self.LeavRightBank(state))
         
         #filter the legal successors
         successors = filter(self.isLegal, successors)
+        #Make sure each successor appears only once in the list using set
+        successors = list(set(successors))
         return successors
         
             
