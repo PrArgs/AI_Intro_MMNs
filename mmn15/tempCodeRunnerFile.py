@@ -1,1 +1,1 @@
-MissionariesCannibalsProblem
+__eq__

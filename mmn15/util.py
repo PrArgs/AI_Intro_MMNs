@@ -51,6 +51,12 @@ class Stack:
     def isEmpty(self):
         "Returns true if the stack is empty"
         return len(self.list) == 0
+    
+    def __len__(self):
+        return len(self.list)
+    
+    def __str__(self) -> str:
+        return str(self.list)
 
 
 class Queue:

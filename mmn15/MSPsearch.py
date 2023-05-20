@@ -29,9 +29,10 @@ LBP = 5 #Last Boat Position
 
 class MissionariesCannibalsProblem():    
 
-    def __init__(self, state =[0,0,3,3,RIGHTBANCK,RIGHTBANCK]):
-        #list of 5 elements M in left bank, K in left bank, M in right bank, K in right bank, 5 boat position, 6 last boat position, 7 Missionaries on Boat, 8 Kannibals on Boat
+    def __init__(self, state =[0,0,3,3,RIGHTBANCK,RIGHTBANCK], action = ""):
+        #list of 6 elements M in left bank, K in left bank, M in right bank, K in right bank, 5 boat position, 6 last boat position.
         self.state = state
+        Action = action
 
     def __getitem__(self, index):
         return self.state[index]
@@ -39,24 +40,29 @@ class MissionariesCannibalsProblem():
     def __setitem__(self, index, value):
         self.state[index] = value
 
-    def getVal(self):
+    def getAction(self):
+        print(self.Action)
+        return str(self.Action)
+    
+    def __hash__(self):
         value = 0
         for i in range(0,5):
             value +=np.power(2,self.state[i]*i)
-        return value
+        return (int(value))
+    
+    def __str__(self):
+        return str(self.state)
     
     def copy(self):
         return MissionariesCannibalsProblem(self.state.copy())
     
     def __eq__(self, other):
-        #check if the current node is the a list
-        if isinstance(other, list):
-            print("Error in the type of the node") 
-            raise Exception("Error in the type of the other\n\n\n")        
-        return self.state == other.state 
+        return self.__hash__() == other.__hash__()
     
-    def isGoalState(self, state):
-        return state == [3,3,0,0,LEFTBANCK,RIVER]
+    def isGoalState(self ,goal = None):
+        if goal is None:
+            goal = MissionariesCannibalsProblem([3,3,0,0,LEFTBANCK,RIVER])
+        return self.__eq__(goal)
     
     def getStartState(self):
         return self.copy()
@@ -77,7 +83,8 @@ class MissionariesCannibalsProblem():
             return False
         return True
     
-    def instanceof(obj, MissionariesCannibalsProblem):
+    
+    def __isinstance__(obj, MissionariesCannibalsProblem):
         return isinstance(obj, MissionariesCannibalsProblem)
 
     
@@ -117,10 +124,10 @@ class MissionariesCannibalsProblem():
             successors.append(MissionariesCannibalsProblem(temp))
             return successors
         
-    def LeavLeftBank(self, state):
+    def LeavLeftBank(self):
         successors = []
         droped = MissionariesCannibalsProblem(self.dropPasnngares())
-        if droped.isGoalState(droped):
+        if droped.isGoalState():
             successors.append(droped)
            
         #put people on boat
@@ -132,7 +139,8 @@ class MissionariesCannibalsProblem():
                     temp[KLB] -= j
                     temp[BP] = RIVER
                     temp[LBP] = LEFTBANCK
-                    successors.append(MissionariesCannibalsProblem(temp))
+                    action = "Take " + str(i) + " Missionaries and " + str(j) + " Kannibals from left bank to right bank"                    
+                    successors.append(MissionariesCannibalsProblem(temp , action))
         return successors                 
     
     def LeavRightBank(self):
@@ -147,28 +155,55 @@ class MissionariesCannibalsProblem():
                     temp[KRB] -= j
                     temp[BP] = RIVER
                     temp[LBP] = RIGHTBANCK
-                    successors.append(MissionariesCannibalsProblem(temp))
+                    action = "Take " + str(i) + " Missionaries and " + str(j) + " Kannibals from right bank to left bank"
+                    successors.append(MissionariesCannibalsProblem(temp, action))
+        return successors
     
 
     def getSuccessors(self):
         successors = []
         #check if the boat is in the river
         if self.state[BP] == RIVER:            
-            successors.append(self.crossRiver())
+            successors= self.crossRiver()
+
+
+            #check if successors is a has a list member
+            for i in successors:
+                if isinstance(i, list):
+                    print("Error in the type of the successors RIVER",i) 
+                    exit(1)
+            
 
         #check if the boat is in the left bank
         elif self.state[BP] == LEFTBANCK:
-            successors.append(self.LeavLeftBank())
+            successors= (self.LeavLeftBank())
+            #check if successors has a list member
+            for i in successors:
+                if isinstance(i, list):
+                    print("Error in the type of the successors LEFTBANCK",i) 
+                    exit(1)
+            
 
         #check if the boat is in the right bank
         elif self.state[BP] == RIGHTBANCK:
-            successors.append(self.LeavRightBank())
+            successors= (self.LeavRightBank())
+             #check if successors is a has a list member
+            for i in successors:
+                if isinstance(i, list):
+                    print("Error in the type of the successors RIGHTBANCK",i) 
+                    exit(1)      
         
 
         #filter the legal successors
-        successors = filter(self.isLegal, successors)
+        successors = filter(MissionariesCannibalsProblem.isLegal, successors)
         #Make sure each successor appears only once in the list using set
         successors = list(set(successors))
+
+        for node in successors:
+            if not isinstance(node, MissionariesCannibalsProblem):
+                print("Error in the type of the node") 
+                exit(1)
+        
         return successors
 
 def backtrcking(node,startState, fatherSunDict , howmayNodes):
@@ -177,20 +212,9 @@ def backtrcking(node,startState, fatherSunDict , howmayNodes):
     and return the list of actions that lead to the goal state from the start state
     by using the fatherSunDict dictionary that contains the parent of each node
     """
-    #check if fatherSunDict is has a list as value
-    for key in fatherSunDict:
-        if isinstance(fatherSunDict[key], list):
-            print("Error in the type of the fatherSunDict") 
-            exit(1) 
-    
-    if isinstance(startState, list):
-        print("Error in the type of the startState before backtrcking") 
-        exit(1)
-    
     result = []  
-    while not startState.__eq__(node):
-        
-        result.append(node[1])
+    while not startState.__eq__(node):        
+        result.append(node)
         node = fatherSunDict[node]
     result = result[::-1] #reverse the list
     for node in result:
@@ -207,28 +231,23 @@ def breadthFirstSearch(problem):
     fatherSunDict = {}
     #keep searching while there are still nodes to explore
     while not fornteire.isEmpty():
-        node = fornteire.pop()        
+        node = fornteire.pop()    
 
-        #start backtracking if we have reached the goal
-        #check if the current node is the a list
-        if isinstance(node, list):
-            print("Error in the type of the BFS /n/n/n/n",node) 
-            exit(1)
-        
-        if problem.isGoalState(node):
+        #start backtracking if we have reached the goal   
+        if node.isGoalState():
             return backtrcking(node, problem.getStartState(), fatherSunDict , howManyNodes)
         
         #add the current node cordinates to the explored list
-
         explored.append(node)
 
+        
+
         #add the successors of the current node to the frontier
-        for successor in problem.getSuccessors():
-            if successor not in explored:                               
+        for successor in node.getSuccessors():
+            if successor not in explored:
                 howManyNodes += 1
                 fornteire.push(successor)
                 fatherSunDict[successor] = node
-
     return []
 
 #IDDFS
