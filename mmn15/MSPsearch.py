@@ -1,3 +1,4 @@
+from time import sleep
 from typing import Any
 import numpy as np
 import util
@@ -110,16 +111,16 @@ class MissionariesCannibalsProblem():
         if result[BP] == LEFTBANCK:
             result[MLB] += MissionariesOnBoat
             result[KLB] += KanibalsOnBoat
-            state = "Dropping " + str(MissionariesOnBoat) + " Missionaries and " + str(KanibalsOnBoat) + " Kannibals on left bank"
-            return MissionariesCannibalsProblem(result , state)
+            return MissionariesCannibalsProblem(result)
         #boat came from right bank drop passengers on right bank base on type of passengers
         elif result[BP] == RIGHTBANCK:
             result[MRB] += MissionariesOnBoat
             result[KRB] += KanibalsOnBoat
-            state = "Dropping " + str(MissionariesOnBoat) + " Missionaries and " + str(KanibalsOnBoat) + " Kannibals on right bank"
-            return MissionariesCannibalsProblem(result , state) 
+            return MissionariesCannibalsProblem(result) 
         else:
             raise Exception("Error in dropPasnngares you can't drop passengers in the river")
+        
+        
                 
     """Get the successors of the state"""
     def getSuccessors(self):
@@ -128,6 +129,8 @@ class MissionariesCannibalsProblem():
         droped = self.dropPasnngares()
         if droped.isGoalState():
                 successors.append(droped)
+        
+        
 
         #check if the boat is in the left bank
         if self.state[BP] == LEFTBANCK:
@@ -135,7 +138,7 @@ class MissionariesCannibalsProblem():
             kanibalTake = KLB
             newBank = RIGHTBANCK
             fromBank = "left"
-            toBank = "right"            
+            tooBank = "right"            
 
         # else the boat is in the right bank
         else:
@@ -143,7 +146,7 @@ class MissionariesCannibalsProblem():
             kanibalTake = KRB
             newBank = LEFTBANCK
             fromBank = "right"
-            toBank = "left"
+            tooBank = "left"
             
 
         #Board people on boat
@@ -153,8 +156,8 @@ class MissionariesCannibalsProblem():
                     temp = droped.copy()
                     temp[misionTake] -= mission
                     temp[kanibalTake] -= kanibal
-                    temp[BP] = newBank
-                    action = "Takes " + str(mission) + " Missionaries and " + str(kanibal) + " Kannibals from " + fromBank + " bank to " + toBank + " bank"
+                    temp[BP] = newBank                    
+                    action = "Takes " + str(mission) + " Missionaries and " + str(kanibal) + " Kannibals from " + fromBank + " bank to " + tooBank + " bank"
                     temp.Action = action                    
                     successors.append(temp)
 
@@ -173,6 +176,49 @@ class MissionariesCannibalsProblem():
         
         return successors
     
+
+    """Get heuristic value of the state
+    The heuristic is the number of trips that we need to make to get to the goal state as it
+    hance as we move more people from the right side to the left side the heuristic will decrease
+    and if we have to move 2 people from the left side to the right side it will increase the heuristic by 2
+    since we take from the goal side that wil need to come back to the left side 
+    """
+    def heuristic(self):
+
+        result = 0
+        sumLeft = self.state[MLB] + self.state[KLB]
+        sumRight = self.state[MRB] + self.state[KRB]
+
+        # goal state
+        if sumLeft == 6:
+            return 0
+        
+        dropped = self.dropPasnngares().copy()
+        
+        # if we have 2 move 2 people from the left side to the right side it will increase the number of trips by at list 1
+        if (self.state[BP]== LEFTBANCK):            
+            if dropped.state[KLB] > dropped.state[MLB] and dropped.state[MLB] > 0:
+                result += 2+sumRight
+                
+        #either we may take 1 person from the right side to the left side or 2 people from the left side to the right side
+        result -= (1 +sumRight)
+
+        #if we can can take 2 people from the left side to the right side it will decrease the number of trips by 1
+        for mission in range(0,3):
+            for kanibal in range(0,3):
+                if mission+kanibal == 2:
+                    temp = dropped.copy()
+                    temp[MLB] -= mission
+                    temp[KLB] -= kanibal
+                    temp[BP] = RIGHTBANCK
+                    if temp.isLegal():
+                        result -= 1 
+                        break   
+
+        return result
+
+
+
 
 """
     This function is used to backtrack from the goal state to the start state
@@ -206,10 +252,6 @@ def breadthFirstSearch(problem):
         node = fornteire.pop()
         howManyNodes += 1    
 
-        # #start backtracking if we have reached the goal   
-        # if node.isGoalState():
-        #     return backtrcking(node, problem.getStartState(), fatherSunDict , howManyNodes)
-        
         #add the current node cordinates to the explored list
         explored.append(node)     
 
@@ -228,44 +270,125 @@ def breadthFirstSearch(problem):
     return []
 
 #IDDFS
-def iterativeDeepeningSearch(prblem):
-    raise NotImplementedError 
+def iterativeDeepeningSearch(problem):
+    FINAL_LIMIT = 100
+    limit = 1
+    homeManyNodes = 0
+    start_node = problem.getStartState()
+
+
+    while limit < FINAL_LIMIT:
+        #set a new frontier and explored list for each iteration
+        frontier = util.Stack()
+        explored = []
+        fatherSunDict = {}
+        depth = 0
+        homeManyNodes = 0
+
+        frontier.push([problem, depth])
+        explored.append(problem)
+
+        while not frontier.isEmpty() and depth < limit:
+            #pop the node from the frontier and add it to the explored list
+            node, depth = frontier.pop()
+            homeManyNodes += 1
+            #start backtracking if we have reached the goal
+            if node.isGoalState():
+                return backtrcking(node, start_node, fatherSunDict , homeManyNodes , "IDDFS")
+            
+            for successor in node.getSuccessors():
+                if successor not in explored:
+                    explored.append(successor) 
+                    frontier.push([successor, depth + 1])
+                    fatherSunDict[successor] = node
+        limit += 1
+
+    print("IDDFS failed to find a solution in depth limit of ", FINAL_LIMIT)  
+
+     
 
 #GBFS
-def greedyBestFirstSearch(prblem):
-    raise NotImplementedError
+def greedyBestFirstSearch(problem):
+    #set a new frontier and explored list
+    frontier = util.PriorityQueue()    
+    explored = []
+    fatherSunDict = {}
+    howManyNodes = 0
+
+    frontier.push(problem, problem.heuristic())
+    explored.append(problem)
+
+    while not frontier.isEmpty():
+        node, _ = frontier.pop()        
+        howManyNodes += 1
+
+        #start backtracking if we have reached the goal
+        if node.isGoalState():
+            return backtrcking(node, problem.getStartState(), fatherSunDict , howManyNodes , "GBFS")
+        
+        for successor in node.getSuccessors():
+            if successor not in explored:
+                explored.append(successor) 
+                frontier.push(successor, successor.heuristic())
+                fatherSunDict[successor] = node
+
+
 
 #A*
-def aStarSearch(prblem):
-    raise NotImplementedError
+def aStarSearch(problem):
+    #set a new frontier and explored list
+    frontier = util.PriorityQueue()
+    explored = []
+    fatherSunDict = {}
+    howManyNodes = 0
+    gValue = 0
 
+
+    frontier.push(problem, problem.heuristic() + gValue)
+    explored.append(problem)
+
+    while not frontier.isEmpty():
+
+        node, gValue = frontier.pop()      
+        howManyNodes += 1
+
+
+
+        #start backtracking if we have reached the goal
+        if node.isGoalState():
+            return backtrcking(node, problem.getStartState(), fatherSunDict , howManyNodes , "A*")
+        
+        #adding the cost of the current node to the gValue
+        gValue += 1
+        for successor in node.getSuccessors():
+            if successor not in explored:
+                explored.append(successor) 
+                frontier.push(successor, successor.heuristic() + gValue)
+                fatherSunDict[successor] = node
+
+    raise Exception("A* failed to find a solution")
 
 def main():
-
     
 
-    problem = MissionariesCannibalsProblem()
-    # ask the user to enter the algorithm he wants to use as a list of numbers
-    # 1 for BFS, 2 for IDDFS, 3 for GBFS, 4 for A* 5 for all
-    #scanner = input("Enter the algorithm you want to use as a list of numbers 1 for BFS, 2 for IDDFS, 3 for GBFS, 4 for A* 5 for all: ")
-    # print("You entered: ", scanner)
-    # if scanner == 1:
-    #     print("BFS")
-    #     breadthFirstSearch(problem)
-    # elif scanner == 2:
-    #     iterativeDeepeningSearch(problem)
-    # elif scanner == 3:
-    #     greedyBestFirstSearch(problem)
-    # elif scanner == 4:
-    #     aStarSearch(problem)
-    # elif scanner == 5:
-    #     
+    problem = MissionariesCannibalsProblem()            
     breadthFirstSearch(problem)
-    # iterativeDeepeningSearch(problem)
-    # greedyBestFirstSearch(problem)
-    # aStarSearch(problem)
-    
-    print("All done!")
+    print("BFS done!")
+    print("##################################################################################################")
+    print("##################################################################################################") 
+    sleep(1.5)
+    iterativeDeepeningSearch(problem)
+    print("IDDFS done!")
+    print("##################################################################################################")
+    print("##################################################################################################")
+    sleep(1.5)
+    greedyBestFirstSearch(problem)
+    print("GBFS done!")
+    print("##################################################################################################")
+    print("##################################################################################################")
+    sleep(1.5)
+    aStarSearch(problem)
+    print("A* done!")
 
 
 main()

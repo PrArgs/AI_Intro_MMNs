@@ -98,9 +98,10 @@ class PriorityQueue:
         heapq.heappush(self.heap, entry)
         self.count += 1
 
+    # pop the item with the minimum priority and it priority
     def pop(self):
-        (_, _, item) = heapq.heappop(self.heap)
-        return item
+        (priority, _, item) = heapq.heappop(self.heap)
+        return item, priority
 
     def isEmpty(self):
         return len(self.heap) == 0
